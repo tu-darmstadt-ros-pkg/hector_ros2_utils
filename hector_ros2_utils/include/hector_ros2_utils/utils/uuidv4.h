@@ -13,43 +13,41 @@ namespace hector
 std::string uuidv4( bool include_hyphens = true )
 {
   static std::random_device rd;
-  static std::mt19937_64 gen( rd());
-  static std::uniform_int_distribution<> dis( 0, 15 );
-  static std::uniform_int_distribution<> dis2( 8, 11 );
-  static const char hex[17] = "0123456789abcdef";
-  char result[36] = {};
+  static std::mt19937_64 gen( rd() );
+  static std::uniform_int_distribution dis( 0, 15 );
+  static std::uniform_int_distribution dis2( 8, 11 );
+  static const std::string hex = "0123456789abcdef";
+  std::string result;
+  result.resize( 37 );
+  result[36] = '\0';
   int i;
   for ( i = 0; i < 8; i++ ) result[i] = hex[dis( gen )];
-  if ( include_hyphens )
-  {
+  if ( include_hyphens ) {
     result[i] = '-';
     ++i;
   }
-  for ( ; i < (include_hyphens ? 13 : 12); i++ ) result[i] = hex[dis( gen )];
-  if ( include_hyphens )
-  {
+  for ( ; i < ( include_hyphens ? 13 : 12 ); i++ ) result[i] = hex[dis( gen )];
+  if ( include_hyphens ) {
     result[i] = '-';
     ++i;
   }
   result[i] = '4';
   ++i;
-  for ( ; i < (include_hyphens ? 18 : 16); i++ ) result[i] = hex[dis( gen )];
-  if ( include_hyphens )
-  {
+  for ( ; i < ( include_hyphens ? 18 : 16 ); i++ ) result[i] = hex[dis( gen )];
+  if ( include_hyphens ) {
     result[i] = '-';
     ++i;
   }
   result[i] = hex[dis2( gen )];
   ++i;
-  for ( ; i < (include_hyphens ? 23 : 20); i++ ) result[i] = hex[dis( gen )];
-  if ( include_hyphens )
-  {
+  for ( ; i < ( include_hyphens ? 23 : 20 ); i++ ) result[i] = hex[dis( gen )];
+  if ( include_hyphens ) {
     result[i] = '-';
     ++i;
   }
-  for ( ; i < (include_hyphens ? 36 : 32); i++ ) result[i] = hex[dis( gen )];
-  return std::string( result, 36 );
+  for ( ; i < ( include_hyphens ? 36 : 32 ); i++ ) result[i] = hex[dis( gen )];
+  return result;
 }
-}
+} // namespace hector
 
-#endif //HECTOR_ROS2_UTILS_UUIDV4_H
+#endif // HECTOR_ROS2_UTILS_UUIDV4_H
