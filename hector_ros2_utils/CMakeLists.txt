@@ -18,15 +18,14 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rcpputils REQUIRED)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(${PROJECT_NAME} INTERFACE rclcpp rcpputils)
-ament_export_dependencies(rclcpp rcpputils)
+ament_target_dependencies(${PROJECT_NAME} INTERFACE rclcpp)
+ament_export_dependencies(rclcpp)
 
 #############
 ## Install ##
@@ -50,7 +49,6 @@ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 #  find_package(ament_lint_auto REQUIRED)
-  find_package(geometry_msgs REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files
   #set(ament_cmake_copyright_FOUND TRUE)
