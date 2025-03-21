@@ -8,10 +8,10 @@ reduce boilerplate code in ROS2.
 To enable easier use of reconfigurable parameters we provide a helper function:
 
 ```cpp
-ReconfigurableParameterSubscription subscription = hector::createReconfigurableParameter(
+ParameterSubscription subscription = hector::createReconfigurableParameter(
   node, "my_parameter",
   my_parameter, "A parameter that can be modified",
-  hector::ReconfigurableParameterOptions<std::string>()
+  hector::ParameterOptions<std::string>()
   .onValidate([]( const auto &value ) {
     return false; /* I HATE UPDATES! */
   })
@@ -36,7 +36,7 @@ MyNode() : Node("my_node") {
   declare_readonly_parameter( "baud_rate", baud_rate_, "Serial baud rate" );
   declare_reconfigurable_parameter(
       "controller", controller_type_, "Controller type",
-      hector::ReconfigurableParameterOptions<std::string>()
+      hector::ParameterOptions<std::string>()
           .additionalConstraints( "Allowed values: diff_drive" )
           .onValidate( []( const auto &value ) { return value == "diff_drive"; } )
           .onUpdate( [this]( const std::string &value ) { setupController( value ); } ) );

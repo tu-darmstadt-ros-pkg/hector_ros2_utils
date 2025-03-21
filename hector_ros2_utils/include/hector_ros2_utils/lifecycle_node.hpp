@@ -1,22 +1,23 @@
 // Copyright (c) 2025 Stefan Fabian. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#ifndef HECTOR_ROS2_UTILS_NODE_HPP
-#define HECTOR_ROS2_UTILS_NODE_HPP
+#ifndef HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP
+#define HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP
 
+#include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include "hector_ros2_utils/parameters/reconfigurable_parameter.hpp"
 
 namespace hector
 {
 
-class Node : public rclcpp::Node
+class LifecycleNode : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  using SharedPtr = std::shared_ptr<Node>;
-  using ConstSharedPtr = std::shared_ptr<const Node>;
-  using WeakPtr = std::weak_ptr<Node>;
+  using SharedPtr = std::shared_ptr<LifecycleNode>;
+  using ConstSharedPtr = std::shared_ptr<const LifecycleNode>;
+  using WeakPtr = std::weak_ptr<LifecycleNode>;
 
-  using rclcpp::Node::Node;
+  using rclcpp_lifecycle::LifecycleNode::LifecycleNode;
 
   template<typename ParameterT>
   void
@@ -65,4 +66,4 @@ private:
 
 } // namespace hector
 
-#endif // HECTOR_ROS2_UTILS_NODE_HPP
+#endif // HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP

@@ -1,10 +1,12 @@
-// Copyright (c) 2024 Stefan Fabian. All rights reserved.
+// Copyright (c) 2025 Stefan Fabian. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #ifndef HECTOR_ROS2_UTILS_RECONFIGURABLE_PARAMETER_HPP
 #define HECTOR_ROS2_UTILS_RECONFIGURABLE_PARAMETER_HPP
 
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -15,7 +17,7 @@
 namespace hector
 {
 
-struct ReconfigurableParameterSubscription {
+struct ParameterSubscription {
   rclcpp::Parameter parameter;
   rclcpp::node_interfaces::PreSetParametersCallbackHandle::SharedPtr pre_set_callback;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_callback;
@@ -36,45 +38,64 @@ struct ReadOnlyParameterOptions {
 };
 
 template<typename ParameterT>
-struct ReconfigurableParameterOptions : public ReadOnlyParameterOptions {
+struct ParameterRange {
+  ParameterT min;
+  ParameterT max;
+  ParameterT step;
+};
+
+template<typename ParameterT>
+struct ParameterOptions : public ReadOnlyParameterOptions {
   std::string additional_constraints;
   rclcpp::Node::PreSetParametersCallbackType pre_set_callback;
   rclcpp::Node::OnSetParametersCallbackType on_set_callback;
   rclcpp::Node::PostSetParametersCallbackType post_set_callback;
   std::function<bool( const ParameterT & )> validator_callback;
   std::function<void( const ParameterT & )> updated_callback;
+  std::optional<ParameterRange<ParameterT>> range;
 
-  ReconfigurableParameterOptions &additionalConstraints( const std::string &constraints )
+  //! Additional constraints for the parameter. Description of the constraints.
+  //! Enforcing the constraints is up to the user in onValidate.
+  ParameterOptions &setAdditionalConstraints( const std::string &constraints )
   {
     additional_constraints = constraints;
     return *this;
   }
 
-  ReconfigurableParameterOptions &onValidate( std::function<bool( const ParameterT & )> value )
+  ParameterOptions &setRange( const ParameterT &min, const ParameterT &max, const ParameterT &step )
+  {
+    range = ParameterRange<ParameterT>{ min, max, step };
+    return *this;
+  }
+
+  //! Callback that is called before the parameter is set. Can be used to enforce additional
+  //! constraints. Return false to reject the parameter update.
+  ParameterOptions &onValidate( std::function<bool( const ParameterT & )> value )
   {
     validator_callback = std::move( value );
     return *this;
   }
 
-  ReconfigurableParameterOptions &onUpdate( std::function<void( const ParameterT & )> value )
+  //! Callback that is called after the parameter is updated.
+  ParameterOptions &onUpdate( std::function<void( const ParameterT & )> value )
   {
     updated_callback = std::move( value );
     return *this;
   }
 
-  ReconfigurableParameterOptions &onPreSet( rclcpp::Node::PreSetParametersCallbackType value )
+  ParameterOptions &onPreSet( rclcpp::Node::PreSetParametersCallbackType value )
   {
     pre_set_callback = std::move( value );
     return *this;
   }
 
-  ReconfigurableParameterOptions &onSet( rclcpp::Node::OnSetParametersCallbackType value )
+  ParameterOptions &onSet( rclcpp::Node::OnSetParametersCallbackType value )
   {
     on_set_callback = std::move( value );
     return *this;
   }
 
-  ReconfigurableParameterOptions &onPostSet( rclcpp::Node::PostSetParametersCallbackType value )
+  ParameterOptions &onPostSet( rclcpp::Node::PostSetParametersCallbackType value )
   {
     post_set_callback = std::move( value );
     return *this;
@@ -82,20 +103,37 @@ struct ReconfigurableParameterOptions : public ReadOnlyParameterOptions {
 };
 
 template<typename ParameterT>
-[[nodiscard]] ReconfigurableParameterSubscription
+[[nodiscard]] ParameterSubscription
 createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::string &name,
                                ParameterT &param, const std::string &description,
-                               const ReconfigurableParameterOptions<ParameterT> &options = {} )
+                               const ParameterOptions<ParameterT> &options = {} )
 {
   rcl_interfaces::msg::ParameterDescriptor param_desc;
+  param_desc.name = name;
   param_desc.description = description;
   param_desc.additional_constraints = options.additional_constraints;
   param_desc.read_only = false;
+  if ( options.range ) {
+    if constexpr ( std::is_floating_point_v<ParameterT> ) {
+      rcl_interfaces::msg::FloatingPointRange range;
+      range.from_value = options.range->min;
+      range.to_value = options.range->max;
+      range.step = options.range->step;
+      param_desc.floating_point_range.push_back( range );
+    } else if constexpr ( std::is_integral_v<ParameterT> ) {
+        rcl_interfaces::msg::IntegerRange range;
+        range.from_value = options.range->min;
+        range.to_value = options.range->max;
+        range.step = options.range->step;
+        param_desc.integer_range.push_back( range );
+    }
+  }
+
   rclcpp::ParameterValue parameter_value( param );
   param = node->declare_parameter( name, parameter_value, param_desc, options.ignore_override )
               .template get<ParameterT>();
 
-  ReconfigurableParameterSubscription subscription;
+  ParameterSubscription subscription;
   subscription.parameter = node->get_parameter( name );
   if ( options.pre_set_callback )
     subscription.pre_set_callback = node->add_pre_set_parameters_callback( options.pre_set_callback );
