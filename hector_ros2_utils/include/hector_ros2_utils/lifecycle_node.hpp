@@ -4,8 +4,8 @@
 #ifndef HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP
 #define HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP
 
-#include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include "hector_ros2_utils/parameters/reconfigurable_parameter.hpp"
+#include <rclcpp_lifecycle/lifecycle_node.hpp>
 
 namespace hector
 {
@@ -20,10 +20,10 @@ public:
   using rclcpp_lifecycle::LifecycleNode::LifecycleNode;
 
   template<typename ParameterT>
-  void
-  declare_reconfigurable_parameter( const std::string &name, ParameterT &value,
-                                    const std::string &description,
-                                    const ParameterOptions<ParameterT> &options = {} )
+  void declare_reconfigurable_parameter( const std::string &name,
+                                         std::reference_wrapper<ParameterT> value,
+                                         const std::string &description,
+                                         const ParameterOptions<ParameterT> &options = {} )
   {
     try {
       rclcpp::Node::SharedPtr node = std::shared_ptr<rclcpp::Node>( this, []( const rclcpp::Node * ) {

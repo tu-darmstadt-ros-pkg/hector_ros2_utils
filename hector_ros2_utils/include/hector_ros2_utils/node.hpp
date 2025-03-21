@@ -19,10 +19,10 @@ public:
   using rclcpp::Node::Node;
 
   template<typename ParameterT>
-  void
-  declare_reconfigurable_parameter( const std::string &name, ParameterT &value,
-                                    const std::string &description,
-                                    const ParameterOptions<ParameterT> &options = {} )
+  void declare_reconfigurable_parameter( const std::string &name,
+                                         std::reference_wrapper<ParameterT> value,
+                                         const std::string &description,
+                                         const ParameterOptions<ParameterT> &options = {} )
   {
     try {
       rclcpp::Node::SharedPtr node = std::shared_ptr<rclcpp::Node>( this, []( const rclcpp::Node * ) {
