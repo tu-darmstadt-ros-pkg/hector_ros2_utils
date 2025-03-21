@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(hector_ros2_utils)
 
 # Default to C99
@@ -19,28 +19,28 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
-add_library(${PROJECT_NAME} INTERFACE)
-target_include_directories(${PROJECT_NAME} INTERFACE
+add_library(hector_ros2_utils INTERFACE)
+add_library(hector_ros2_utils::hector_ros2_utils ALIAS hector_ros2_utils)
+target_include_directories(hector_ros2_utils INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(${PROJECT_NAME} INTERFACE rclcpp)
-ament_export_dependencies(rclcpp)
+target_link_libraries(hector_ros2_utils INTERFACE rclcpp::rclcpp)
 
 #############
 ## Install ##
 #############
 
+install(TARGETS hector_ros2_utils EXPORT hector_ros2_utils-targets)
 install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}
-  LIBRARY DESTINATION lib
-  INCLUDES DESTINATION include
+  EXPORT hector_ros2_utils-targets
+  FILE hector_ros2_utils-targets.cmake
+  NAMESPACE hector_ros2_utils::
+  DESTINATION lib/cmake/hector_ros2_utils
 )
 
 install(DIRECTORY include/ DESTINATION include/)
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 #############
 ## Testing ##
@@ -61,7 +61,10 @@ if(BUILD_TESTING)
   target_include_directories(utils PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-  target_link_libraries(utils ${PROJECT_NAME})
+  target_link_libraries(utils hector_ros2_utils)
 endif()
 
+ament_export_targets(hector_ros2_utils-targets)
+ament_export_dependencies(rclcpp)
+ament_export_include_directories(include)
 ament_package()
