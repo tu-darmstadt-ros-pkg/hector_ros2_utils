@@ -105,7 +105,8 @@ struct ParameterOptions : public ReadOnlyParameterOptions {
 template<typename ParameterT>
 [[nodiscard]] ParameterSubscription
 createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::string &name,
-                               ParameterT &param, const std::string &description,
+                               std::reference_wrapper<ParameterT> param,
+                               const std::string &description,
                                const ParameterOptions<ParameterT> &options = {} )
 {
   rcl_interfaces::msg::ParameterDescriptor param_desc;
@@ -121,17 +122,17 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
       range.step = options.range->step;
       param_desc.floating_point_range.push_back( range );
     } else if constexpr ( std::is_integral_v<ParameterT> ) {
-        rcl_interfaces::msg::IntegerRange range;
-        range.from_value = options.range->min;
-        range.to_value = options.range->max;
-        range.step = options.range->step;
-        param_desc.integer_range.push_back( range );
+      rcl_interfaces::msg::IntegerRange range;
+      range.from_value = options.range->min;
+      range.to_value = options.range->max;
+      range.step = options.range->step;
+      param_desc.integer_range.push_back( range );
     }
   }
 
-  rclcpp::ParameterValue parameter_value( param );
-  param = node->declare_parameter( name, parameter_value, param_desc, options.ignore_override )
-              .template get<ParameterT>();
+  rclcpp::ParameterValue parameter_value( param.get() );
+  param.get() = node->declare_parameter( name, parameter_value, param_desc, options.ignore_override )
+                    .template get<ParameterT>();
 
   ParameterSubscription subscription;
   subscription.parameter = node->get_parameter( name );
@@ -143,14 +144,14 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
     subscription.post_set_callback =
         node->add_post_set_parameters_callback( options.post_set_callback );
   subscription.update_value_callback = node->add_post_set_parameters_callback(
-      [node, name, &param, updated_callback = options.updated_callback](
+      [node, name, param, updated_callback = options.updated_callback](
           const std::vector<rclcpp::Parameter> &parameters ) {
         for ( const auto &parameter : parameters ) {
           if ( parameter.get_name() == name ) {
             RCLCPP_DEBUG_STREAM( node->get_logger(),
                                  "Updating parameter " << name << " to "
                                                        << parameter.get_value<ParameterT>() << "." );
-            param = parameter.get_value<ParameterT>();
+            param.get() = parameter.get_value<ParameterT>();
             if ( updated_callback ) {
               updated_callback( param );
             }
