@@ -18,8 +18,7 @@ std::string uuidv4( bool include_hyphens = true )
   static std::uniform_int_distribution dis2( 8, 11 );
   static const std::string hex = "0123456789abcdef";
   std::string result;
-  result.resize( 37 );
-  result[36] = '\0';
+  result.resize( 36 );
   int i;
   for ( i = 0; i < 8; i++ ) result[i] = hex[dis( gen )];
   if ( include_hyphens ) {
