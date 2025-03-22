@@ -10,7 +10,7 @@ To enable easier use of reconfigurable parameters we provide a helper function:
 ```cpp
 ParameterSubscription subscription = hector::createReconfigurableParameter(
   node, "my_parameter",
-  my_parameter, "A parameter that can be modified",
+  std::ref( my_parameter ), "A parameter that can be modified",
   hector::ParameterOptions<std::string>()
   .onValidate([]( const auto &value ) {
     return false; /* I HATE UPDATES! */
@@ -18,7 +18,7 @@ ParameterSubscription subscription = hector::createReconfigurableParameter(
 );
 ```
 
-`my_parameter` will automatically be kept up to date with value changes as long as the `subscription` object lives.
+`my_parameter` will automatically be updated with value changes as long as the `subscription` object lives.
 Please make sure it does not outlive the `node`.
 
 ## Node
@@ -35,7 +35,7 @@ MyNode() : Node("my_node") {
   declare_readonly_parameter( "port_name", port_name_, "Serial port name" );
   declare_readonly_parameter( "baud_rate", baud_rate_, "Serial baud rate" );
   declare_reconfigurable_parameter(
-      "controller", controller_type_, "Controller type",
+      "controller", std::ref( controller_type_ ), "Controller type",
       hector::ParameterOptions<std::string>()
           .additionalConstraints( "Allowed values: diff_drive" )
           .onValidate( []( const auto &value ) { return value == "diff_drive"; } )
@@ -52,5 +52,8 @@ std::string controller_type_ = "diff_drive";
 ```
 
 The passed parameters are automatically initialized with the parameter value, defaulting to their current value.
-For reconfigurable parameters, the parameters are also automatically updated.
+The parameters are also automatically updated for reconfigurable parameters.
 Using the options, you have simplified full control over validation and update callbacks.
+Note that the reconfigurable parameter requires a `std::reference_wrapper` obtained using `std::ref` to make it explicit that this is a reference
+and reduce the risk of the user using a local variable without noticing.
+The read-only version also uses a reference, but since it is only initialized with the value once, it does not have to live past the function call.
