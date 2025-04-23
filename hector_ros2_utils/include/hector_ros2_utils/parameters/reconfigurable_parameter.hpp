@@ -102,6 +102,23 @@ struct ParameterOptions : public ReadOnlyParameterOptions {
   }
 };
 
+template<typename T>
+struct is_vector : std::false_type {
+};
+
+template<typename T, typename A>
+struct is_vector<std::vector<T, A>> : std::true_type {
+};
+
+template<typename T>
+struct vector_type {
+};
+
+template<typename T, typename A>
+struct vector_type<std::vector<T, A>> {
+  using type = T;
+};
+
 template<typename ParameterT>
 [[nodiscard]] ParameterSubscription
 createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::string &name,
@@ -109,6 +126,15 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
                                const std::string &description,
                                const ParameterOptions<ParameterT> &options = {} )
 {
+  if constexpr ( is_vector<ParameterT>::value ) {
+    using VT = typename vector_type<ParameterT>::type;
+    // Use static assert here, because ParameterValue also supports int to initialize but returns
+    // int64_t when getting the value.
+    static_assert( std::is_same_v<bool, VT> || std::is_same_v<uint8_t, VT> ||
+                       std::is_same_v<int64_t, VT> || std::is_same_v<double, VT> ||
+                       std::is_same_v<std::string, VT>,
+                   "Only bool, long, double and string are supported as vector types" );
+  }
   rcl_interfaces::msg::ParameterDescriptor param_desc;
   param_desc.name = name;
   param_desc.description = description;
@@ -148,9 +174,9 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
           const std::vector<rclcpp::Parameter> &parameters ) {
         for ( const auto &parameter : parameters ) {
           if ( parameter.get_name() == name ) {
-            RCLCPP_DEBUG_STREAM( node->get_logger(),
-                                 "Updating parameter " << name << " to "
-                                                       << parameter.get_value<ParameterT>() << "." );
+            RCLCPP_DEBUG_STREAM( node->get_logger(), "Updating parameter " << name << " to "
+                                                                           << parameter.as_string()
+                                                                           << "." );
             param.get() = parameter.get_value<ParameterT>();
             if ( updated_callback ) {
               updated_callback( param );

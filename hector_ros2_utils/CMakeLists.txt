@@ -62,6 +62,12 @@ if(BUILD_TESTING)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
   target_link_libraries(utils hector_ros2_utils)
+
+  ament_add_gtest_executable(test_parameters test/test_parameters.cpp)
+  target_include_directories(test_parameters PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+  target_link_libraries(test_parameters hector_ros2_utils)
 endif()
 
 ament_export_targets(hector_ros2_utils-targets)
