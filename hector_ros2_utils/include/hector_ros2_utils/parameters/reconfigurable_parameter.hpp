@@ -17,7 +17,29 @@
 namespace hector
 {
 
-struct ParameterSubscription {
+class ParameterSubscription
+{
+public:
+  ParameterSubscription(
+      rclcpp::Node::SharedPtr node, rclcpp::Parameter parameter,
+      rclcpp::node_interfaces::PreSetParametersCallbackHandle::SharedPtr pre_set_callback,
+      rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_callback,
+      rclcpp::node_interfaces::PostSetParametersCallbackHandle::SharedPtr post_set_callback,
+      rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr validate_value_callback,
+      rclcpp::node_interfaces::PostSetParametersCallbackHandle::SharedPtr update_value_callback )
+      : node( std::move( node ) ), parameter( std::move( parameter ) ),
+        pre_set_callback( std::move( pre_set_callback ) ),
+        on_set_callback( std::move( on_set_callback ) ),
+        post_set_callback( std::move( post_set_callback ) ),
+        validate_value_callback( std::move( validate_value_callback ) ),
+        update_value_callback( std::move( update_value_callback ) )
+  {
+  }
+
+  ~ParameterSubscription() { node->undeclare_parameter( parameter.get_name() ); }
+
+private:
+  rclcpp::Node::SharedPtr node;
   rclcpp::Parameter parameter;
   rclcpp::node_interfaces::PreSetParametersCallbackHandle::SharedPtr pre_set_callback;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_callback;
@@ -160,16 +182,19 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
   param.get() = node->declare_parameter( name, parameter_value, param_desc, options.ignore_override )
                     .template get<ParameterT>();
 
-  ParameterSubscription subscription;
-  subscription.parameter = node->get_parameter( name );
+  rclcpp::Parameter rclcpp_parameter = node->get_parameter( name );
+  rclcpp::node_interfaces::PreSetParametersCallbackHandle::SharedPtr pre_set_callback;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_callback;
+  rclcpp::node_interfaces::PostSetParametersCallbackHandle::SharedPtr post_set_callback;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr validate_value_callback;
+  rclcpp::node_interfaces::PostSetParametersCallbackHandle::SharedPtr update_value_callback;
   if ( options.pre_set_callback )
-    subscription.pre_set_callback = node->add_pre_set_parameters_callback( options.pre_set_callback );
+    pre_set_callback = node->add_pre_set_parameters_callback( options.pre_set_callback );
   if ( options.on_set_callback )
-    subscription.on_set_callback = node->add_on_set_parameters_callback( options.on_set_callback );
+    on_set_callback = node->add_on_set_parameters_callback( options.on_set_callback );
   if ( options.post_set_callback )
-    subscription.post_set_callback =
-        node->add_post_set_parameters_callback( options.post_set_callback );
-  subscription.update_value_callback = node->add_post_set_parameters_callback(
+    post_set_callback = node->add_post_set_parameters_callback( options.post_set_callback );
+  update_value_callback = node->add_post_set_parameters_callback(
       [node, name, param, updated_callback = options.updated_callback](
           const std::vector<rclcpp::Parameter> &parameters ) {
         for ( const auto &parameter : parameters ) {
@@ -185,7 +210,7 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
         }
       } );
   if ( options.validator_callback ) {
-    subscription.validate_value_callback =
+    validate_value_callback =
         node->add_on_set_parameters_callback( [name, validator = options.validator_callback](
                                                   const std::vector<rclcpp::Parameter> &parameters ) {
           for ( const auto &parameter : parameters ) {
@@ -197,7 +222,13 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
           return rcl_interfaces::msg::SetParametersResult().set__successful( true );
         } );
   }
-  return subscription;
+  return { node,
+           rclcpp_parameter,
+           pre_set_callback,
+           on_set_callback,
+           post_set_callback,
+           validate_value_callback,
+           update_value_callback };
 }
 } // namespace hector
 
