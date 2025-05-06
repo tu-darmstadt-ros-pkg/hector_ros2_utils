@@ -174,9 +174,9 @@ createReconfigurableParameter( const rclcpp::Node::SharedPtr &node, const std::s
           const std::vector<rclcpp::Parameter> &parameters ) {
         for ( const auto &parameter : parameters ) {
           if ( parameter.get_name() == name ) {
-            RCLCPP_DEBUG_STREAM( node->get_logger(), "Updating parameter " << name << " to "
-                                                                           << parameter.as_string()
-                                                                           << "." );
+            RCLCPP_DEBUG_STREAM( node->get_logger(), "Updating parameter "
+                                                         << name << " to "
+                                                         << parameter.value_to_string() << "." );
             param.get() = parameter.get_value<ParameterT>();
             if ( updated_callback ) {
               updated_callback( param );
