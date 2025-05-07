@@ -20,6 +20,7 @@ namespace hector
 class ParameterSubscription
 {
 public:
+  ParameterSubscription() = default;
   ParameterSubscription(
       rclcpp::Node::SharedPtr node, rclcpp::Parameter parameter,
       rclcpp::node_interfaces::PreSetParametersCallbackHandle::SharedPtr pre_set_callback,
@@ -35,8 +36,44 @@ public:
         update_value_callback( std::move( update_value_callback ) )
   {
   }
+  ParameterSubscription( const ParameterSubscription & ) = delete;
+  ParameterSubscription( ParameterSubscription &&other )
+  {
+    node = std::move( other.node );
+    parameter = std::move( other.parameter );
+    pre_set_callback = std::move( other.pre_set_callback );
+    on_set_callback = std::move( other.on_set_callback );
+    post_set_callback = std::move( other.post_set_callback );
+    validate_value_callback = std::move( other.validate_value_callback );
+    update_value_callback = std::move( other.update_value_callback );
+    other.node = nullptr;
+  }
 
-  ~ParameterSubscription() { node->undeclare_parameter( parameter.get_name() ); }
+  ~ParameterSubscription()
+  {
+    if ( !node )
+      return;
+    node->undeclare_parameter( parameter.get_name() );
+  }
+
+  bool isValid() const { return node != nullptr; }
+
+  ParameterSubscription &operator=( const ParameterSubscription & ) = delete;
+  ParameterSubscription &operator=( ParameterSubscription &&other )
+  {
+    if ( this == &other )
+      return *this;
+
+    node = std::move( other.node );
+    parameter = std::move( other.parameter );
+    pre_set_callback = std::move( other.pre_set_callback );
+    on_set_callback = std::move( other.on_set_callback );
+    post_set_callback = std::move( other.post_set_callback );
+    validate_value_callback = std::move( other.validate_value_callback );
+    update_value_callback = std::move( other.update_value_callback );
+    other.node = nullptr;
+    return *this;
+  }
 
 private:
   rclcpp::Node::SharedPtr node;
