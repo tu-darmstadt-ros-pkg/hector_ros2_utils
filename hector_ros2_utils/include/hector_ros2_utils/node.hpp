@@ -30,7 +30,7 @@ public:
       } );
       ParameterSubscription subscription =
           createReconfigurableParameter( node, name, value, description, options );
-      reconfigurable_parameters_.push_back( subscription );
+      reconfigurable_parameters_.push_back( std::move( subscription ) );
     } catch ( const rclcpp::ParameterTypeException &ex ) {
       throw rclcpp::exceptions::InvalidParameterTypeException( name, ex.what() );
     }

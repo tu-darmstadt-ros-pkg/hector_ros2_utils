@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Stefan Fabian. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#include "hector_ros2_utils/node.hpp"
 #include "hector_ros2_utils/parameters/reconfigurable_parameter.hpp"
 
 #include <gtest/gtest.h>
@@ -43,6 +44,15 @@ TEST( Parameters, arrayTypes )
   rclcpp::ParameterValue string_param_value( string_param );
   auto string_param_sub = hector::createReconfigurableParameter(
       node, "test_string_array", std::ref( string_param ), "Test string array" );
+}
+
+TEST( Parameters, Node )
+{
+  // TODO: Only catches compile errors at the moment. Actually test the parameters.
+  auto hector_node = std::make_shared<hector::Node>( "test_parameters_hector_node" );
+  int int_param = 0;
+  hector_node->declare_reconfigurable_parameter( "test_int", std::ref( int_param ), "Test int." );
+  hector_node->declare_readonly_parameter( "test_int_readonly", int_param, "Test int readonly." );
 }
 
 int main( int argc, char **argv )
