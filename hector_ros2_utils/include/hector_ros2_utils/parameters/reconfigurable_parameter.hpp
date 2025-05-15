@@ -49,13 +49,6 @@ public:
     other.node = nullptr;
   }
 
-  ~ParameterSubscription()
-  {
-    if ( !node )
-      return;
-    node->undeclare_parameter( parameter.get_name() );
-  }
-
   bool isValid() const { return node != nullptr; }
 
   ParameterSubscription &operator=( const ParameterSubscription & ) = delete;
