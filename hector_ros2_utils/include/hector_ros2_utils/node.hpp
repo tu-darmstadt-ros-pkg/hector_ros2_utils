@@ -25,11 +25,8 @@ public:
                                          const ParameterOptions<ParameterT> &options = {} )
   {
     try {
-      rclcpp::Node::SharedPtr node = std::shared_ptr<rclcpp::Node>( this, []( const rclcpp::Node * ) {
-        /* Empty deleter to allow use in constructor before shared_from_this is available. */
-      } );
       ParameterSubscription subscription =
-          createReconfigurableParameter( node, name, value, description, options );
+          createReconfigurableParameter( *this, name, value, description, options );
       reconfigurable_parameters_.push_back( std::move( subscription ) );
     } catch ( const rclcpp::ParameterTypeException &ex ) {
       throw rclcpp::exceptions::InvalidParameterTypeException( name, ex.what() );

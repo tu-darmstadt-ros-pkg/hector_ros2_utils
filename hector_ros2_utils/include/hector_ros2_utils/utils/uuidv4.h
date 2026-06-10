@@ -10,7 +10,7 @@
 namespace hector
 {
 
-std::string uuidv4( bool include_hyphens = true )
+inline std::string uuidv4( bool include_hyphens = true )
 {
   static std::random_device rd;
   static std::mt19937_64 gen( rd() );
@@ -18,7 +18,7 @@ std::string uuidv4( bool include_hyphens = true )
   static std::uniform_int_distribution dis2( 8, 11 );
   static const std::string hex = "0123456789abcdef";
   std::string result;
-  result.resize( 36 );
+  result.resize( include_hyphens ? 36 : 32 );
   int i;
   for ( i = 0; i < 8; i++ ) result[i] = hex[dis( gen )];
   if ( include_hyphens ) {

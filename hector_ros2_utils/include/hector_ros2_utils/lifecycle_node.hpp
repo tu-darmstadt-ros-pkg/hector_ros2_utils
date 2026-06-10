@@ -5,7 +5,12 @@
 #define HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP
 
 #include "hector_ros2_utils/parameters/reconfigurable_parameter.hpp"
-#include <rclcpp_lifecycle/lifecycle_node.hpp>
+
+// rclcpp_lifecycle is an optional dependency: the LifecycleNode helper is only available when the
+// rclcpp_lifecycle headers are present. This lets the single-header export be used in projects that
+// do not have rclcpp_lifecycle available.
+#if __has_include( <rclcpp_lifecycle/lifecycle_node.hpp> )
+  #include <rclcpp_lifecycle/lifecycle_node.hpp>
 
 namespace hector
 {
@@ -26,12 +31,9 @@ public:
                                          const ParameterOptions<ParameterT> &options = {} )
   {
     try {
-      rclcpp::Node::SharedPtr node = std::shared_ptr<rclcpp::Node>( this, []( const rclcpp::Node * ) {
-        /* Empty deleter to allow use in constructor before shared_from_this is available. */
-      } );
       ParameterSubscription subscription =
-          createReconfigurableParameter( node, name, value, description, options );
-      reconfigurable_parameters_.push_back( subscription );
+          createReconfigurableParameter( *this, name, value, description, options );
+      reconfigurable_parameters_.push_back( std::move( subscription ) );
     } catch ( const rclcpp::ParameterTypeException &ex ) {
       throw rclcpp::exceptions::InvalidParameterTypeException( name, ex.what() );
     }
@@ -65,5 +67,7 @@ private:
 };
 
 } // namespace hector
+
+#endif // __has_include( <rclcpp_lifecycle/lifecycle_node.hpp> )
 
 #endif // HECTOR_ROS2_UTILS_LIFECYCLE_NODE_HPP
