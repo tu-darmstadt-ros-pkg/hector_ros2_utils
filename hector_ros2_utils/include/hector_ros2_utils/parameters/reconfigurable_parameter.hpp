@@ -192,14 +192,12 @@ template<typename ParameterT, typename NodeT>
 {
   // Accept the node either by reference or as a (shared) pointer and normalize to a reference so
   // the body can uniformly use the rclcpp parameter interface.
-  auto &node = [&]() -> auto &
-  {
+  auto &node = [&]() -> auto & {
     if constexpr ( is_shared_ptr<std::remove_cv_t<std::remove_reference_t<NodeT>>>::value )
       return *node_ref;
     else
       return node_ref;
-  }
-  ();
+  }();
   if constexpr ( is_vector<ParameterT>::value ) {
     using VT = typename vector_type<ParameterT>::type;
     // Use static assert here, because ParameterValue also supports int to initialize but returns
