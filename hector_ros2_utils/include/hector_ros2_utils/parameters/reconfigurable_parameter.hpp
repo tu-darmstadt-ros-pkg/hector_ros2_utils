@@ -176,8 +176,8 @@ struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {
  * in sync with the parameter value as long as the returned subscription lives.
  *
  * Works with any node type that exposes the rclcpp parameter interface, i.e., both
- * rclcpp::Node and rclcpp_lifecycle::LifecycleNode. The node may be passed either by reference or as
- * a (shared) pointer.
+ * rclcpp::Node and rclcpp_lifecycle::LifecycleNode. The node may be passed either by reference or
+ * as a (shared) pointer.
  *
  * @param node_ref The node the parameter is declared on. Must outlive the returned subscription.
  * @param name Name of the parameter.
@@ -190,14 +190,16 @@ template<typename ParameterT, typename NodeT>
     NodeT &&node_ref, const std::string &name, std::reference_wrapper<ParameterT> param,
     const std::string &description, const ParameterOptions<ParameterT> &options = {} )
 {
-  // Accept the node either by reference or as a (shared) pointer and normalize to a reference so the
-  // body can uniformly use the rclcpp parameter interface.
-  auto &node = [&]() -> auto & {
+  // Accept the node either by reference or as a (shared) pointer and normalize to a reference so
+  // the body can uniformly use the rclcpp parameter interface.
+  auto &node = [&]() -> auto &
+  {
     if constexpr ( is_shared_ptr<std::remove_cv_t<std::remove_reference_t<NodeT>>>::value )
       return *node_ref;
     else
       return node_ref;
-  }();
+  }
+  ();
   if constexpr ( is_vector<ParameterT>::value ) {
     using VT = typename vector_type<ParameterT>::type;
     // Use static assert here, because ParameterValue also supports int to initialize but returns

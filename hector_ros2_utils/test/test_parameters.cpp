@@ -38,10 +38,11 @@ template<typename Node, typename = void>
 struct createCallableWith : std::false_type {
 };
 template<typename Node>
-struct createCallableWith<Node, std::void_t<decltype( createReconfigurableParameter(
-                                    std::declval<Node>(), std::declval<const std::string &>(),
-                                    std::ref( std::declval<int &>() ),
-                                    std::declval<const std::string &>() ) )>> : std::true_type {
+struct createCallableWith<
+    Node, std::void_t<decltype( createReconfigurableParameter(
+              std::declval<Node>(), std::declval<const std::string &>(),
+              std::ref( std::declval<int &>() ), std::declval<const std::string &>() ) )>>
+    : std::true_type {
 };
 
 static_assert( createCallableWith<rclcpp::Node &>::value, "Node must be accepted by reference." );
